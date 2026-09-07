@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt.android)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -36,6 +38,15 @@ android {
 }
 
 dependencies {
+    ksp(libs.hilt.android.compiler)
+    implementation(libs.hilt.android)
+    implementation(project(":feature:notes"))
+    implementation(project(":feature:settings"))
+    implementation(project(":feature:tags"))
+    implementation(project(":feature:template"))
+    implementation(project(":core:data"))
+    implementation(project(":core:database"))
+    implementation(project(":core:domain"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)

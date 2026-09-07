@@ -24,4 +24,11 @@ dependencyResolutionManagement {
 
 rootProject.name = "NotesMD"
 include(":app")
- 
+include(":core:model")
+include(":core:domain")
+include(":core:database")
+include(":core:data")
+include(":feature:notes")
+include(":feature:settings")
+include(":feature:tags")
+include(":feature:template") 

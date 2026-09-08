@@ -13,14 +13,15 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }}
 
 dependencies {
     ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.android)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.kotlinx.coroutines.android)
     
     implementation(project(":core:domain"))
     implementation(project(":core:database"))

@@ -16,8 +16,8 @@ android {    buildFeatures {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }}
 
 dependencies {
@@ -33,9 +33,11 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     
     implementation(project(":core:domain"))
+    implementation(project(":core:designsystem"))
     implementation(project(":core:model"))
     implementation(libs.androidx.core.ktx)
 }
+
 
 
 

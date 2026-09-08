@@ -29,8 +29,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures {
         compose = true
@@ -40,6 +40,7 @@ android {
 dependencies {
     ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.android)
+    implementation(project(":core:designsystem"))
     implementation(project(":feature:notes"))
     implementation(project(":feature:settings"))
     implementation(project(":feature:tags"))

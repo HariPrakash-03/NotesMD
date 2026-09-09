@@ -42,6 +42,9 @@ kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+commonmark = { group = "org.commonmark", name = "commonmark", version = "0.21.0" }
+commonmark-ext-gfm-tables = { group = "org.commonmark", name = "commonmark-ext-gfm-tables", version = "0.21.0" }
+commonmark-ext-strikethrough = { group = "org.commonmark", name = "commonmark-ext-gfm-strikethrough", version = "0.21.0" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

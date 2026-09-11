@@ -25,6 +25,7 @@ class EditorViewModel @Inject constructor(
     private val createTagUseCase: CreateTagUseCase,
     private val noteRepository: NoteRepository,
     val tagRepository: TagRepository,
+    private val templateRepository: com.notesmd.core.domain.repository.TemplateRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -65,6 +66,13 @@ class EditorViewModel @Inject constructor(
         contentChanges
             .sample(5_000)
             .onEach { (title, content) -> persistContent(title, content) }
+            .launchIn(viewModelScope)
+
+        templateRepository.observeDefaultTemplate()
+            .onEach { defaultTemplate ->
+                val state = _uiState.value as? EditorUiState.Active ?: return@onEach
+                _uiState.value = state.copy(viewerTemplate = defaultTemplate)
+            }
             .launchIn(viewModelScope)
     }
 

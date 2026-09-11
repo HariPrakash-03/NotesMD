@@ -13,12 +13,21 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import com.notesmd.core.domain.model.ExportProgress
+import com.notesmd.core.domain.usecase.BulkExportNotesUseCase
+import dagger.hilt.android.qualifiers.ApplicationContext
+
 @OptIn(FlowPreview::class)
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val noteRepository: NoteRepository,
     private val tagRepository: TagRepository,
-    private val createNoteUseCase: CreateNoteUseCase
+    private val createNoteUseCase: CreateNoteUseCase,
+    private val bulkExportNotesUseCase: BulkExportNotesUseCase,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
@@ -26,6 +35,9 @@ class DashboardViewModel @Inject constructor(
     private val _sortOrder = MutableStateFlow(SortOrder.DATE_MODIFIED)
     private val _isSelectionMode = MutableStateFlow(false)
     private val _selectedNoteIds = MutableStateFlow<Set<Long>>(emptySet())
+    private val _isExporting = MutableStateFlow(false)
+    private val _exportProgressCurrent = MutableStateFlow(0)
+    private val _exportProgressTotal = MutableStateFlow(0)
 
     private val _effects = Channel<DashboardEffect>(Channel.BUFFERED)
     val effects = _effects.receiveAsFlow()
@@ -41,8 +53,11 @@ class DashboardViewModel @Inject constructor(
             FilterConfig(tags, query, selectedTag, sortOrder)
         },
         _isSelectionMode,
-        _selectedNoteIds
-    ) { notes, filterConfig, isSelectionMode, selectedNoteIds ->
+        _selectedNoteIds,
+        combine(_isExporting, _exportProgressCurrent, _exportProgressTotal) { isExporting, current, total ->
+            Triple(isExporting, current, total)
+        }
+    ) { notes, filterConfig, isSelectionMode, selectedNoteIds, exportState ->
         val tags = filterConfig.tags
         val query = filterConfig.query
         val selectedTag = filterConfig.selectedTag
@@ -75,7 +90,10 @@ class DashboardViewModel @Inject constructor(
                 sortOrder = sortOrder,
                 searchQuery = query,
                 isSelectionMode = isSelectionMode,
-                selectedNoteIds = selectedNoteIds
+                selectedNoteIds = selectedNoteIds,
+                isExporting = exportState.first,
+                exportProgressCurrent = exportState.second,
+                exportProgressTotal = exportState.third
             )
         }
     }.stateIn(
@@ -132,6 +150,57 @@ data class FilterConfig(
             toggleNoteSelection(noteId)
         } else {
             viewModelScope.launch { _effects.send(DashboardEffect.NavigateToViewer(noteId)) }
+        }
+    }
+
+    fun onExportDirSelected(uri: Uri?) {
+        if (uri == null) return
+        val noteIds = _selectedNoteIds.value.toList()
+        if (noteIds.isEmpty()) return
+
+        context.contentResolver.takePersistableUriPermission(
+            uri,
+            Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION
+        )
+
+        viewModelScope.launch {
+            _isExporting.value = true
+            _exportProgressCurrent.value = 0
+            _exportProgressTotal.value = 0
+            
+            bulkExportNotesUseCase(noteIds, uri.toString()).collect { progress ->
+                when (progress) {
+                    is ExportProgress.InProgress -> {
+                        _exportProgressCurrent.value = progress.current
+                        _exportProgressTotal.value = progress.total
+                    }
+                    is ExportProgress.Completed -> {
+                        _isExporting.value = false
+                        exitSelectionMode()
+                        _effects.send(
+                            DashboardEffect.ShowSnackbar(
+                                message = "Export complete",
+                                actionLabel = "Open Folder",
+                                onActionClick = {
+                                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                                        data = Uri.parse(progress.folderUri)
+                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    }
+                                    try {
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        // Ignore
+                                    }
+                                }
+                            )
+                        )
+                    }
+                    is ExportProgress.Failed -> {
+                        _isExporting.value = false
+                        _effects.send(DashboardEffect.ShowSnackbar("Export failed: ${progress.error}"))
+                    }
+                }
+            }
         }
     }
 }

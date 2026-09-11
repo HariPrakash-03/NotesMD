@@ -19,6 +19,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -40,9 +44,10 @@ import com.notesmd.designsystem.components.TagChip
 import com.notesmd.designsystem.components.TagChipVariant
 import com.notesmd.designsystem.components.TagSuggestionUiModel
 import com.notesmd.core.model.Tag
+import com.notesmd.core.markdown.template.toUiTemplate
 import org.commonmark.parser.Parser
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun EditorScreen(
     uiState: EditorUiState,
@@ -101,6 +106,8 @@ fun EditorScreen(
                 }
             }
 
+            val (titleFocus, tagsFocus, contentFocus, accessoryFocus) = remember { FocusRequester.createRefs() }
+            
             Scaffold(
                 topBar = {
                     TopAppBar(
@@ -113,6 +120,11 @@ fun EditorScreen(
                                 ),
                                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                                 singleLine = true,
+                                modifier = Modifier
+                                    .focusRequester(titleFocus)
+                                    .focusProperties {
+                                        next = tagsFocus
+                                    },
                                 decorationBox = { innerTextField ->
                                     if (uiState.title.isEmpty()) {
                                         Text(
@@ -143,16 +155,22 @@ fun EditorScreen(
                 },
                 bottomBar = {
                     if (!uiState.isPreviewMode) {
-                        EditorAccessoryBar(
-                            onInsert = { prefix, suffix ->
-                                onInsertSyntax(
-                                    prefix,
-                                    suffix,
-                                    contentTextFieldValue.selection.start,
-                                    contentTextFieldValue.selection.end
-                                )
-                            }
-                        )
+                        Box(modifier = Modifier
+                            .focusRequester(accessoryFocus)
+                            .focusProperties {
+                                previous = contentFocus
+                            }) {
+                            EditorAccessoryBar(
+                                onInsert = { prefix, suffix ->
+                                    onInsertSyntax(
+                                        prefix,
+                                        suffix,
+                                        contentTextFieldValue.selection.start,
+                                        contentTextFieldValue.selection.end
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
             ) { paddingValues ->
@@ -162,16 +180,23 @@ fun EditorScreen(
                         .padding(paddingValues)
                 ) {
                     // Tag Strip
-                    EditorTagStrip(
-                        activeTags = uiState.activeTags,
-                        availableTags = availableTags,
-                        onTagAdded = onTagAdded,
-                        onTagRemoved = onTagRemoved,
-                        onCreateNewTag = onCreateNewTag,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
+                    Box(modifier = Modifier
+                        .focusRequester(tagsFocus)
+                        .focusProperties {
+                            next = contentFocus
+                            previous = titleFocus
+                        }) {
+                        EditorTagStrip(
+                            activeTags = uiState.activeTags,
+                            availableTags = availableTags,
+                            onTagAdded = onTagAdded,
+                            onTagRemoved = onTagRemoved,
+                            onCreateNewTag = onCreateNewTag,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
 
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
@@ -185,12 +210,12 @@ fun EditorScreen(
                         ) {
                             val parser = remember { Parser.builder().build() }
                             val node = remember(uiState.rawContent) { parser.parse(uiState.rawContent) }
-                            CompositionLocalProvider(LocalViewerTemplate provides ViewerTemplate.Default) {
+                            val template = uiState.viewerTemplate ?: com.notesmd.core.model.ViewerTemplate.Default
+                            CompositionLocalProvider(LocalViewerTemplate provides template.toUiTemplate()) {
                                 MarkdownAstView(node = node)
                             }
                         }
                     } else {
-                        val focusRequester = remember { FocusRequester() }
                         BasicTextField(
                             value = contentTextFieldValue,
                             onValueChange = {
@@ -205,7 +230,11 @@ fun EditorScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(16.dp)
-                                .focusRequester(focusRequester),
+                                .focusRequester(contentFocus)
+                                .focusProperties {
+                                    next = accessoryFocus
+                                    previous = tagsFocus
+                                },
                             keyboardOptions = KeyboardOptions(
                                 capitalization = KeyboardCapitalization.Sentences
                             ),
@@ -236,11 +265,11 @@ fun EditorPreviewToggle(
 ) {
     Row(
         modifier = Modifier
-            .height(32.dp)
+            .defaultMinSize(minHeight = 48.dp)
             .padding(end = 16.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .clickable { onToggle() },
+            .clickable(onClickLabel = "Toggle edit or preview mode") { onToggle() },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -249,7 +278,7 @@ fun EditorPreviewToggle(
                 .fillMaxHeight()
                 .clip(CircleShape)
                 .background(if (!isPreviewMode) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
-                .padding(4.dp),
+                .padding(8.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -265,7 +294,7 @@ fun EditorPreviewToggle(
                 .fillMaxHeight()
                 .clip(CircleShape)
                 .background(if (isPreviewMode) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
-                .padding(4.dp),
+                .padding(8.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -315,7 +344,7 @@ fun EditorTagStrip(
                         singleLine = true,
                         modifier = Modifier
                             .width(100.dp)
-                            .height(28.dp)
+                            .defaultMinSize(minHeight = 48.dp)
                             .clip(MaterialTheme.shapes.small)
                             .background(MaterialTheme.colorScheme.surfaceVariant)
                             .padding(horizontal = 8.dp, vertical = 6.dp)
@@ -340,7 +369,7 @@ fun EditorTagStrip(
                             showTagPicker = false
                             tagSearchQuery = ""
                         },
-                        modifier = Modifier.padding(top = 32.dp)
+                        modifier = Modifier.padding(top = 48.dp)
                     )
                 } else {
                     Text(
@@ -348,10 +377,10 @@ fun EditorTagStrip(
                         color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.labelMedium,
                         modifier = Modifier
-                            .height(28.dp)
+                            .defaultMinSize(minHeight = 48.dp)
                             .clip(MaterialTheme.shapes.small)
-                            .clickable { showTagPicker = true }
-                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                            .clickable(onClickLabel = "Add new tag") { showTagPicker = true }
+                            .padding(horizontal = 8.dp, vertical = 14.dp)
                     )
                 }
             }
@@ -366,7 +395,7 @@ fun EditorAccessoryBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(44.dp)
+            .defaultMinSize(minHeight = 56.dp)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = 8.dp),
@@ -396,7 +425,7 @@ fun AccessoryButton(
     TextButton(
         onClick = onClick,
         contentPadding = PaddingValues(4.dp),
-        modifier = Modifier.defaultMinSize(minWidth = 40.dp)
+        modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp).semantics { this.contentDescription = contentDescription }
     ) {
         Text(
             text = label,

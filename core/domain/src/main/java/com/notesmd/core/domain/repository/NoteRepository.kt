@@ -11,4 +11,5 @@ interface NoteRepository {
     suspend fun softDeleteNote(noteId: Long)
     suspend fun hardDeleteNote(noteId: Long)
     suspend fun getNotesForExport(noteIds: List<Long>): List<Note>
+    suspend fun getActiveNotes(): List<Note>
 }

@@ -58,4 +58,22 @@ class SafDocumentStorageProvider @Inject constructor(
                     }
             }
         }
+
+    override suspend fun createDocumentInTree(directoryUri: String, filename: String, content: String): Result<String> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val parsedUri = Uri.parse(directoryUri)
+                val docFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, parsedUri)
+                    ?: throw IOException("Cannot read directory")
+                
+                val newFile = docFile.createFile("text/markdown", filename)
+                    ?: throw IOException("Could not create document $filename")
+                
+                context.contentResolver.openOutputStream(newFile.uri)?.use { outputStream ->
+                    outputStream.write(content.toByteArray(Charsets.UTF_8))
+                } ?: throw IOException("Could not open output stream for document")
+                
+                newFile.uri.toString()
+            }
+        }
 }

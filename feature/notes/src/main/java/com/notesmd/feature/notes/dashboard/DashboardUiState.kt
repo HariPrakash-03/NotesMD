@@ -13,7 +13,10 @@ sealed interface DashboardUiState {
         val sortOrder: SortOrder = SortOrder.DATE_MODIFIED,
         val searchQuery: String = "",
         val isSelectionMode: Boolean = false,
-        val selectedNoteIds: Set<Long> = emptySet()
+        val selectedNoteIds: Set<Long> = emptySet(),
+        val isExporting: Boolean = false,
+        val exportProgressCurrent: Int = 0,
+        val exportProgressTotal: Int = 0
     ) : DashboardUiState
 }
 

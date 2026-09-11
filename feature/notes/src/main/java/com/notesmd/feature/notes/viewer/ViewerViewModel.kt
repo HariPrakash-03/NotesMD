@@ -13,6 +13,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -21,7 +23,8 @@ class ViewerViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val noteRepository: NoteRepository,
     private val forkExternalFileUseCase: ForkExternalFileUseCase,
-    private val documentStorageProvider: DocumentStorageProvider
+    private val documentStorageProvider: DocumentStorageProvider,
+    private val templateRepository: com.notesmd.core.domain.repository.TemplateRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ViewerUiState>(ViewerUiState.Loading)
@@ -36,6 +39,13 @@ class ViewerViewModel @Inject constructor(
 
     init {
         loadContent()
+        
+        templateRepository.observeDefaultTemplate()
+            .onEach { defaultTemplate ->
+                val state = _uiState.value as? ViewerUiState.Content ?: return@onEach
+                _uiState.value = state.copy(viewerTemplate = defaultTemplate)
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun loadContent() {

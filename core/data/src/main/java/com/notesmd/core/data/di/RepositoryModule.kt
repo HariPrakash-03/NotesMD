@@ -6,6 +6,8 @@ import com.notesmd.core.data.repository.TagRepositoryImpl
 import com.notesmd.core.domain.repository.NoteRepository
 import com.notesmd.core.domain.repository.SettingsRepository
 import com.notesmd.core.domain.repository.TagRepository
+import com.notesmd.core.domain.repository.TemplateRepository
+import com.notesmd.core.data.repository.TemplateRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -27,4 +29,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSettingsRepository(impl: SettingsRepositoryImpl): SettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTemplateRepository(impl: TemplateRepositoryImpl): TemplateRepository
 }

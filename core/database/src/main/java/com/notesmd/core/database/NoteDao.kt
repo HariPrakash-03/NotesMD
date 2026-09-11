@@ -20,6 +20,14 @@ interface NoteDao {
     """)
     fun observeActiveNotes(): Flow<List<NoteWithTagsRelation>>
 
+    @Transaction
+    @Query("""
+        SELECT * FROM notes
+        WHERE is_deleted = 0
+        ORDER BY updated_at DESC
+    """)
+    suspend fun getActiveNotes(): List<NoteWithTagsRelation>
+
     @Query("""
         UPDATE notes
         SET title = :title, content = :content, updated_at = :updatedAt, sync_state = :syncState

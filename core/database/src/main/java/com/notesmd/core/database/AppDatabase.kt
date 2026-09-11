@@ -8,13 +8,15 @@ import androidx.room.TypeConverters
     entities = [
         NoteEntity::class,
         TagEntity::class,
-        NoteTagCrossRef::class
+        NoteTagCrossRef::class,
+        TemplateEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(SyncStateConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
     abstract fun tagDao(): TagDao
+    abstract fun templateDao(): TemplateDao
 }

@@ -16,13 +16,13 @@ data class ViewerTemplate(
 ) {
     companion object {
         val Default = ViewerTemplate(
-            name = "Default",
-            fontFamily = FontFamilyOption.SANS_SERIF,
+            name = "Terminal Dark",
+            fontFamily = FontFamilyOption.MONOSPACE,
             fontScale = 1.0f,
-            backgroundColor = "#FFFFFF",
-            headingColor = "#1F2328",
-            codeBlockTint = "#F6F8FA",
-            quoteAccentColor = "#0969DA"
+            backgroundColor = "#0D1117",
+            headingColor = "#58A6FF",
+            codeBlockTint = "#161B22",
+            quoteAccentColor = "#388BFD"
         )
     }
 }

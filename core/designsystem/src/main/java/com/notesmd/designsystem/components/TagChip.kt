@@ -64,7 +64,7 @@ fun TagChip(
 
     Row(
         modifier = modifier
-            .height(28.dp)
+            .defaultMinSize(minHeight = 48.dp)
             .clip(containerShape)
             .background(backgroundColor)
             .border(if (borderColor != Color.Transparent) 1.dp else 0.dp, borderColor, containerShape)
@@ -88,15 +88,19 @@ fun TagChip(
         )
         if (variant == TagChipVariant.INPUT) {
             Spacer(modifier = Modifier.width(4.dp))
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Remove tag",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            Box(
                 modifier = Modifier
-                    .size(14.dp)
-                    .clip(CircleShape)
-                    .clickable { onRemove() }
-            )
+                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                    .clickable(onClickLabel = "Remove tag") { onRemove() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = null, // Handled by Box
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
         }
     }
 }

@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,13 +32,25 @@ fun DashboardScreen(
     onNoteLongClick: (Long) -> Unit,
     onCreateNote: () -> Unit,
     onSettingsClick: () -> Unit,
-    onSortOrderSelected: (SortOrder) -> Unit
+    onSortOrderSelected: (SortOrder) -> Unit,
+    onExportDirSelected: (android.net.Uri?) -> Unit
 ) {
+    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        onExportDirSelected(uri)
+    }
+
     Scaffold(
         topBar = {
             if (uiState is DashboardUiState.Content && uiState.isSelectionMode) {
                 TopAppBar(
-                    title = { Text("${uiState.selectedNoteIds.size} selected") }
+                    title = { Text("${uiState.selectedNoteIds.size} selected") },
+                    actions = {
+                        IconButton(onClick = { launcher.launch(null) }, enabled = !uiState.isExporting) {
+                            Icon(Icons.Default.Share, "Export Notes")
+                        }
+                    }
                 )
             } else {
                 var showSortMenu by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
@@ -139,6 +152,25 @@ fun DashboardScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
+
+                    if (uiState.isExporting) {
+                        val progressMsg = if (uiState.exportProgressTotal > 0) {
+                            "Exporting ${uiState.exportProgressCurrent} of ${uiState.exportProgressTotal}…"
+                        } else {
+                            "Starting export…"
+                        }
+                        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                            Text(progressMsg, style = MaterialTheme.typography.bodyMedium)
+                            if (uiState.exportProgressTotal > 0) {
+                                LinearProgressIndicator(
+                                    progress = { uiState.exportProgressCurrent.toFloat() / uiState.exportProgressTotal.toFloat() },
+                                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                                )
+                            } else {
+                                LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
+                            }
+                        }
+                    }
                     
                     LazyColumn(
                         contentPadding = PaddingValues(16.dp),

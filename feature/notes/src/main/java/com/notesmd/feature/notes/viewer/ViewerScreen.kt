@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.notesmd.core.markdown.template.LocalViewerTemplate
+import com.notesmd.core.markdown.template.toUiTemplate
 import com.notesmd.core.markdown.view.MarkdownBlockNode
 import kotlinx.coroutines.launch
 import org.commonmark.node.Node
@@ -34,6 +35,7 @@ import org.commonmark.node.Node
 fun ViewerScreen(
     onNavigateBack: () -> Unit,
     onNavigateToEditor: (Long) -> Unit,
+    onShowTemplatePicker: () -> Unit = {},
     viewModel: ViewerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -100,8 +102,7 @@ fun ViewerScreen(
                     IconButton(onClick = { showSearch = !showSearch }) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     }
-                    // TODO: Template Picker Sheet doesn't exist yet
-                    IconButton(onClick = { }, enabled = false) {
+                    IconButton(onClick = onShowTemplatePicker) {
                         Icon(Icons.Default.Palette, contentDescription = "Style")
                     }
                     // TODO: Export scoped to bulk-export phase
@@ -176,7 +177,8 @@ fun ViewerScreen(
                         )
                     }
                     
-                    CompositionLocalProvider(LocalViewerTemplate provides LocalViewerTemplate.current) {
+                    val template = state.viewerTemplate ?: com.notesmd.core.model.ViewerTemplate.Default
+                    CompositionLocalProvider(LocalViewerTemplate provides template.toUiTemplate()) {
                         LazyColumn(
                             state = listState,
                             contentPadding = PaddingValues(16.dp),

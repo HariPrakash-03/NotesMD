@@ -8,4 +8,5 @@ package com.notesmd.core.domain.provider
 interface DocumentStorageProvider {
     suspend fun readExternalFile(uri: String): Result<String>
     suspend fun listFiles(directoryUri: String): Result<List<com.notesmd.core.model.DeviceFile>>
+    suspend fun createDocumentInTree(directoryUri: String, filename: String, content: String): Result<String>
 }

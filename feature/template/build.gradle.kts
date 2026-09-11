@@ -35,7 +35,10 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:model"))
+    implementation(project(":core:markdown"))
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.compose.material.iconsExtended)
+    implementation(libs.commonmark)
 }
 
 

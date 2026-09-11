@@ -35,4 +35,7 @@ class NoteRepositoryImpl @Inject constructor(
 
     override suspend fun getNotesForExport(noteIds: List<Long>): List<Note> =
         noteDao.getNotesByIds(noteIds).map { it.toDomain() }
+
+    override suspend fun getActiveNotes(): List<Note> =
+        noteDao.getActiveNotes().map { it.toDomain() }
 }

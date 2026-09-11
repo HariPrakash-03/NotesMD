@@ -10,7 +10,8 @@ sealed interface ViewerUiState {
         val rootNode: Node,
         val isDeviceFile: Boolean,
         val headings: List<HeadingUiModel>,
-        val baseUri: String? = null
+        val baseUri: String? = null,
+        val viewerTemplate: com.notesmd.core.model.ViewerTemplate? = null
     ) : ViewerUiState
 }
 
